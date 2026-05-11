@@ -2,44 +2,21 @@ pipeline {
     agent any
 
     stages {
-
-        stage('Clone Code') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/yourrepo/my-static-website.git'
+                checkout scm
             }
         }
 
-        stage('Deploy to Apache') {
+        stage('Deploy HTML to Nginx') {
             steps {
-                sh '''
-                sudo cp -r * /var/www/html/
-                '''
+                script {
+                    def srcFile = 'index.html'
+                    def destDir = '/usr/share/nginx/html'
+
+                    sh "if [ -f ${srcFile} ]; then sudo cp -v ${srcFile} ${destDir}/; else echo '${srcFile} not found' >&2; exit 1; fi"
+                }
             }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                sh 'curl localhost'
-            }
-        }
-    }
-
-    post {
-
-        success {
-            emailext (
-                subject: "SUCCESS: Website Deployment Successful",
-                body: "Build Success: ${BUILD_URL}",
-                to: "yourmail@gmail.com"
-            )
-        }
-
-        failure {
-            emailext (
-                subject: "FAILED: Website Deployment Failed",
-                body: "Build Failed: ${BUILD_URL}",
-                to: "yourmail@gmail.com"
-            )
         }
     }
 }
